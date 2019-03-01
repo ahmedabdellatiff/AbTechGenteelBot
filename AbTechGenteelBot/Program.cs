@@ -52,6 +52,7 @@ namespace AbTechGenteelBot
             {
                 SendSms(item, "HBD");
             }
+            //in end we will publish this bot on Task Scheduler 
 
         }
        static void SendSms(string number, string message)
