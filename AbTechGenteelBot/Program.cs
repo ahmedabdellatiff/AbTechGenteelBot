@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
@@ -36,9 +37,12 @@ namespace AbTechGenteelBot
                                     ", TargetDay), con);
                 con.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                if (reader.HasRows)
                 {
-                    FetchedMobiles.Add(reader[0].ToString());
+                    while (reader.Read())
+                    {
+                        FetchedMobiles.Add(reader[0].ToString());
+                    }
                 }
                 reader.Close();
                 con.Close();
@@ -50,12 +54,26 @@ namespace AbTechGenteelBot
             //Also recommend: get message from configurable source not fixed in code
             foreach (var item in FetchedMobiles)
             {
-                SendSms(item, "HBD");
+                LogSms(item);
+                //SendSms(item, "HBD");
             }
             //in end we will publish this bot on Task Scheduler 
 
         }
-       static void SendSms(string number, string message)
+        static void LogSms(string number)
+        {
+            using (SqlConnection con =
+                      new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            {
+                SqlCommand cmd =
+               new SqlCommand("INSERT INTO [dbo].[SmsLog](Mobile,CreationDateTime) Values(@Mobile,getdate())", con);
+                cmd.Parameters.Add("@Mobile", SqlDbType.VarChar, 50).Value = number;
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+        }
+        static void SendSms(string number, string message)
         {
             var username = ConfigurationManager.AppSettings["SmsUsername"];
             var password = ConfigurationManager.AppSettings["SmsPassword"];
